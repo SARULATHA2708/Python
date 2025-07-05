@@ -1,0 +1,337 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+struct Employee {
+    int id;
+    char name[50];
+    char designation[50];
+    char department[50];
+    int  salary;
+    int s;
+};
+void addEmployee();
+void displayEmployees();
+void searchEmployee();
+void updateEmployee();
+void deleteEmployee();
+void generateReport();
+void deleteAllData();
+void removeNewline();
+FILE *file;
+int main() {
+    int c;
+    while (1) {
+        printf("\n--- IT Company Employee Management System ---\n");
+        printf("1. Add Employee\n");
+        printf("2. Display All Employees\n");
+        printf("3. Search Employee\n");
+        printf("4. Update Employee\n");
+        printf("5. Delete Employee\n");
+        printf("6. Generate Report\n");
+        printf("7. Delete All Data\n");
+        printf("8. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &c);
+        switch (c) {
+            case 1: addEmployee(); break;
+            case 2: displayEmployees(); break;
+            case 3: searchEmployee(); break;
+            case 4: updateEmployee(); break;
+            case 5: deleteEmployee(); break;
+            case 6: generateReport(); break;
+            case 7: deleteAllData();break;
+            case 8: exit(0);
+            default: printf("Invalid choice! Try again.\n");
+        }
+    }
+    return 0;
+}
+void addEmployee() {
+    struct Employee emp;
+    int numEmployees;
+    int currentID = 101; 
+    FILE *idFile;
+    int c=0;
+    idFile = fopen("currentID.txt", "r");
+    if (idFile != NULL) {
+        fscanf(idFile, "%d", &currentID); 
+        fclose(idFile);
+    }
+    printf("How many employees do you want to add? ");
+    scanf("%d", &numEmployees);
+    getchar(); 
+    file = fopen("employees.dat", "ab");
+    if (file == NULL) {
+        printf("Error opening file!\n");
+        return;
+    }
+    for (int i = 0; i < numEmployees; i++) 
+    {
+        printf("\n--- Adding Employee %d ---\n", i + 1);
+        emp.id = currentID++;
+        printf("Employee ID: %d\n", emp.id);
+        printf("Enter Name: ");
+        fgets(emp.name, sizeof(emp.name), stdin);
+        for (int j = 0; emp.name[j] != '\0'; j++)
+        {
+            if (emp.name[j] == '\n')
+            {
+                emp.name[j] = '\0';
+                break;
+            }
+        }
+        printf("Enter Designation: ");
+        fgets(emp.designation, sizeof(emp.designation), stdin);
+        for (int j = 0; emp.designation[j] != '\0'; j++) 
+        {
+            if (emp.designation[j] == '\n')
+            {
+                emp.designation[j] = '\0';
+                break;
+            }
+        }
+        printf("Enter Department: ");
+        fgets(emp.department, sizeof(emp.department), stdin);
+        for (int j = 0; emp.department[j] != '\0'; j++)
+        {
+            if (emp.department[j] == '\n')
+            {
+                emp.department[j] = '\0';
+                break;
+            }
+        }
+        printf("Enter Salary: ");
+        scanf("%d", &emp.salary);
+        getchar();
+        fprintf(file, "%d\n %s\n %s\n %s\n %d\n", emp.id, emp.name, emp.designation, emp.department, emp.salary);
+        printf("Employee %d added successfully!\n", i + 1);
+        c+=1;
+    }
+    fclose(file);
+    idFile = fopen("currentID.txt", "w");
+    if (idFile != NULL) 
+    {
+        fprintf(idFile, "%d", currentID);
+        fclose(idFile);
+    }
+    printf("\nAll employee details have been added to the file successfully.\n");
+}
+void displayEmployees() {
+    struct Employee emp;
+    FILE *file = fopen("employees.dat", "r");
+    if (file == NULL) {
+        printf("Error opening employees.dat file!\n");
+        return;
+    }
+    printf("\n--- Employee List ---\n");
+    while (fscanf(file, "%d", &emp.id) == 1) {
+        fgetc(file); 
+        fgets(emp.name, sizeof(emp.name), file);
+        removeNewline(emp.name); 
+        fgets(emp.designation, sizeof(emp.designation), file);
+        removeNewline(emp.designation); 
+        fgets(emp.department, sizeof(emp.department), file);
+        removeNewline(emp.department); 
+        fscanf(file, "%d", &emp.salary);
+        fgetc(file); 
+        printf("ID: %d, Name: %s, Designation: %s, Department: %s, Salary: %d\n",
+               emp.id, emp.name, emp.designation, emp.department, emp.salary);
+    }
+    fclose(file);
+}
+void removeNewline(char *str) {
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] == '\n') {
+            str[i] = '\0';
+            break;
+        }
+    }
+}
+
+void searchEmployee() {
+    struct Employee emp;
+    int id, found = 0;
+    FILE *file = fopen("employees.dat", "r");
+    if (file == NULL) {
+        printf("Error opening employees.dat file!\n");
+        return;
+    }
+    printf("Enter Employee ID to search: ");
+    scanf("%d", &id);
+    while (fscanf(file, "%d", &emp.id) == 1) {
+        fgetc(file); 
+        fgets(emp.name, sizeof(emp.name), file);
+        removeNewline(emp.name); 
+        fgets(emp.designation, sizeof(emp.designation), file);
+        removeNewline(emp.designation); 
+        fgets(emp.department, sizeof(emp.department), file);
+        removeNewline(emp.department); 
+        fscanf(file, "%d", &emp.salary);
+        fgetc(file); 
+        if (id == emp.id) {
+            printf("ID: %d, Name: %s, Designation: %s, Department: %s, Salary: %d\n",
+                   emp.id, emp.name, emp.designation, emp.department, emp.salary);
+            found = 1;
+            break;
+        }
+    }
+    fclose(file);
+    if (!found) {
+        printf("Employee not found!\n");
+    }
+}
+void updateEmployee() {
+    struct Employee emp;
+    int id, found = 0,c;
+
+    FILE *file = fopen("employees.dat", "r");
+    FILE *tempFile = fopen("temp.dat", "w");
+    if (file == NULL || tempFile == NULL) {
+        printf("Error opening file!\n");
+        return;
+    }
+    printf("Enter Employee ID to update: ");
+    scanf("%d", &id);
+    while (fscanf(file, "%d", &emp.id) == 1) {
+        fgetc(file); 
+        fgets(emp.name, sizeof(emp.name), file);
+        removeNewline(emp.name); 
+        fgets(emp.designation, sizeof(emp.designation), file);
+        removeNewline(emp.designation); 
+        fgets(emp.department, sizeof(emp.department), file);
+        removeNewline(emp.department); 
+        fscanf(file, "%d", &emp.salary);
+        fgetc(file); 
+        if (emp.id == id) {
+            printf("\nEmployee Found:\n");
+            printf("1. Name: %s\n2. Designation: %s\n3. Department: %s\n4. Salary: %d\n", emp.name, emp.designation, emp.department, emp.salary);
+            printf("\nEnter the number of the field Need to update: ");
+            scanf("%d", &c);
+
+            switch (c) {
+                case 1:
+                    printf("Enter new Name: ");
+                    getchar(); 
+                    fgets(emp.name, sizeof(emp.name), stdin);
+                    removeNewline(emp.name);
+                    break;
+                case 2:
+                    printf("Enter new Designation: ");
+                    getchar(); 
+                    fgets(emp.designation, sizeof(emp.designation), stdin);
+                    removeNewline(emp.designation);
+                    break;
+                case 3:
+                    printf("Enter new Department: ");
+                    getchar(); 
+                    fgets(emp.department, sizeof(emp.department), stdin);
+                    removeNewline(emp.department);
+                    break;
+                case 4:
+                    printf("Enter new Salary: ");
+                    scanf("%d", &emp.salary);
+                    break;
+                default:
+                    printf("Invalid choice!\n");
+                    break;
+            }
+
+            found = 1;
+        }
+        fprintf(tempFile, "%d\n%s\n%s\n%s\n%d\n", emp.id, emp.name, emp.designation, emp.department, emp.salary);
+    }
+    fclose(file);
+    fclose(tempFile);
+    remove("employees.dat");
+    rename("temp.dat", "employees.dat");
+    if (found) {
+        printf("Employee details updated successfully!\n");
+    } else {
+        printf("Employee not found!\n");
+    }
+}
+void deleteEmployee() {
+    struct Employee emp;
+    int id, found = 0;
+    FILE *file = fopen("employees.dat", "r");
+    FILE *tempFile = fopen("temp.dat", "w");
+    if (file == NULL || tempFile == NULL) {
+        printf("Error opening file!\n");
+        return;
+    }
+    printf("Enter Employee ID to delete: ");
+    scanf("%d", &id);
+    while (fscanf(file, "%d", &emp.id) == 1) {
+        fgetc(file); 
+        fgets(emp.name, sizeof(emp.name), file);
+        removeNewline(emp.name);
+        fgets(emp.designation, sizeof(emp.designation), file);
+        removeNewline(emp.designation);
+        fgets(emp.department, sizeof(emp.department), file);
+        removeNewline(emp.department);
+        fscanf(file, "%d", &emp.salary);
+        fgetc(file); 
+        if (emp.id != id) {
+            fprintf(tempFile, "%d\n%s\n%s\n%s\n%d\n", emp.id, emp.name, emp.designation, emp.department, emp.salary);
+        } else {
+            found = 1;
+        }
+    }
+    fclose(file);
+    fclose(tempFile);
+    remove("employees.dat");
+    rename("temp.dat", "employees.dat");
+    if (found) {
+        printf("Employee deleted successfully!\n");
+    } else {
+        printf("Employee not found!\n");
+    }
+}
+void generateReport() {
+    struct Employee emp;
+    int count = 0;
+    float totalSalary = 0.0;
+    FILE *file = fopen("employees.dat", "r");
+    if (file == NULL) {
+        printf("Error opening employees.dat file!\n");
+        return;
+    }
+    while (fscanf(file, "%d", &emp.id) == 1) {
+        fgetc(file); 
+        fgets(emp.name, sizeof(emp.name), file);
+        removeNewline(emp.name); 
+        fgets(emp.designation, sizeof(emp.designation), file);
+        removeNewline(emp.designation); 
+        fgets(emp.department, sizeof(emp.department), file);
+        removeNewline(emp.department); 
+        fscanf(file, "%d", &emp.salary);
+        fgetc(file); 
+        count++;
+        totalSalary += emp.salary;
+    }
+    fclose(file);
+    printf("\n--- Report ---\n");
+    printf("Total Employees: %d\n", count);
+    if (count > 0) {
+        printf("Average Salary: %.2f\n", totalSalary / count);
+    }
+}
+void deleteAllData() {
+    char con;
+    printf("\nAre you sure you want to delete all employee data? (y/n): ");
+    getchar(); 
+    scanf("%c", &con);
+
+    if (con == 'y' || con == 'Y') {
+        remove("employees.dat");
+
+        FILE *idFile = fopen("currentID.txt", "w");
+        if (idFile != NULL) {
+            fprintf(idFile, "%d", 101);
+            fclose(idFile);
+        }
+        printf("All data deleted successfully, and Employee IDs have been reset.\n");
+    } else {
+        printf("Operation canceled.\n");
+    }
+}
